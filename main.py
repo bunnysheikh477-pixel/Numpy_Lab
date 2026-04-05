@@ -81,9 +81,6 @@ app.mount("/static", StaticFiles(directory=BASE_DIR / "frontend"), name="static"
 async def root():
     return FileResponse(BASE_DIR / "frontend" / "index.html")
 
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    return Response(status_code=204)
 
 
 # ------------------------
@@ -193,25 +190,13 @@ async def plot_graph(req: PlotGraphRequest):
 async def calculate_cagr(req: CAGRRequest):
     try:
         rate = Functions.cagr(req.BeginningValue, req.EndingValue, req.Years)
-        t = np.linspace(0, req.Years, 200)
-        profit = req.BeginningValue * (1 + rate) ** t
-
-        fig, ax = plt.subplots(figsize=(10,6))
-        ax.plot(t, profit, 'b-', linewidth=2)
-        ax.scatter([0, req.Years], [req.BeginningValue, req.EndingValue], color='red', zorder=5)
-        ax.set_xlabel("Year")
-        ax.set_ylabel("Value")
-        ax.set_title(f"Company Growth (CAGR = {rate:.2%})")
-        ax.grid(True)
-
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", bbox_inches="tight")
-        plt.close(fig)
-        buf.seek(0)
 
         return {
             "cagr": rate,
-            "cagr_percent": f"{rate:.2%}"
+            "cagr_percent": f"{rate:.2%}",
+            "BeginningValue": req.BeginningValue,
+            "EndingValue": req.EndingValue,
+            "Years": req.Years
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
